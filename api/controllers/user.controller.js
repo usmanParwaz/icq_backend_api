@@ -101,7 +101,7 @@ const loginUser = async (req, res, next) => {
   try {
 
     // calling data service to save new system role in the database
-    const { status, data, error } = await login(req.body);
+    const { status, data, error } = await login(req.query);
 
     // checking the result of the operation
     if (status === SERVER_ERROR) {
@@ -136,15 +136,27 @@ const loginUser = async (req, res, next) => {
           error,
         },
       });
+    }else if (status === NOT_FOUND) {
+      // this code runs in case data service failed due to
+      // duplication value
+
+      // logging error message to the console
+      logError(
+        `Requested operation failed. User not Found.`
+      );
+
+      // returning the response with an error message
+      return res.status(NOT_FOUND).json({
+        hasError: false,
+        message: `ERROR: User Not Found.`
+      });
     }
 
     // returning the response with success message
     return res.status(CREATED).json({
       hasError: false,
       message: `SUCCESS: Requested operation successful.`,
-      data: {
-        systemRole: data,
-      },
+      data
     });
   } catch (error) {
     // this code runs in case of an error @ runtime

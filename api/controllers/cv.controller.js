@@ -7,10 +7,11 @@ const {
   // importing required data services
   const {
     saveCV,
-    login,
-    findSystemRoles,
-    findSystemRoleById,
-    findSystemRoleByIdAndUpdate,
+    saveCvPdf,
+    findCvById,
+    findAllCVs,
+    findFilteredCVs,
+    findCvByIdAndUpdate,
   } = require(`../../dependencies/internal-services/cv.services`);
   
   // importing response status codes
@@ -30,10 +31,13 @@ const {
   const createCV = async (req, res, next) => {
     try {
       // fetching required data via incoming token data
-      // const { firstName, lastName, email, password, phoneNumber, address, role } = req.body;
+      const { userId, cvPdf, cvPdfName } = req.body;
+
+      // making pdf url 
+      const filePath = await saveCvPdf(userId, cvPdf, cvPdfName);
   
       // calling data service to save new system role in the database
-      const { status, data, error } = await saveCV(req.body);
+      const { status, data, error } = await saveCV(req.body, filePath);
   
       // checking the result of the operation
       if (status === SERVER_ERROR) {
@@ -94,136 +98,17 @@ const {
       });
     }
   };
-  
-  // this controller takes data via incoming request body and creates a new system
-  // role in the database.
-  const loginUser = async (req, res, next) => {
-    try {
-  
-      // calling data service to save new system role in the database
-      const { status, data, error } = await login(req.body);
-  
-      // checking the result of the operation
-      if (status === SERVER_ERROR) {
-        // this code runs in case data service failed due to
-        // unknown database error
-  
-        // logging error message to the console
-        logError(`Requested operation failed. Unknown database error.`);
-  
-        // returning the response with an error message
-        return res.status(SERVER_ERROR).json({
-          hasError: true,
-          message: `ERROR: Requested operation failed.`,
-          error: {
-            error,
-          },
-        });
-      } else if (status === CONFLICT) {
-        // this code runs in case data service failed due to
-        // duplication value
-  
-        // logging error message to the console
-        logError(
-          `Requested operation failed. System role with duplicate field(s) exists.`
-        );
-  
-        // returning the response with an error message
-        return res.status(CONFLICT).json({
-          hasError: true,
-          message: `ERROR: Requested operation failed.`,
-          error: {
-            error,
-          },
-        });
-      }
-  
-      // returning the response with success message
-      return res.status(CREATED).json({
-        hasError: false,
-        message: `SUCCESS: Requested operation successful.`,
-        data: {
-          systemRole: data,
-        },
-      });
-    } catch (error) {
-      // this code runs in case of an error @ runtime
-  
-      // logging error messages to the console
-      logError(`ERROR @ addSystemRole -> system-role.controllers.js`, error);
-  
-      // returning response with an error message
-      return res.status(SERVER_ERROR).json({
-        hasError: true,
-        message: `ERROR: Requested operation failed.`,
-        error: {
-          error: `An unhandled exception occured on the server.`,
-        },
-      });
-    }
-  };
-  
-  // this controller returns all system roles stored in the database as
-  // an array
-  const getAllSystemRoles = async (req, res, next) => {
-    try {
-      // calling data service to fetch all system roles from database
-      const { status, data, error } = await findSystemRoles(`-__v`);
-  
-      // checking the result of the operation
-      if (status === SERVER_ERROR) {
-        // this code runs in case data service failed due to
-        // unknown database error
-  
-        // logging error message to the console
-        logError(`Requested operation failed. Unknown database error.`);
-  
-        // returning the response with an error message
-        return res.status(SERVER_ERROR).json({
-          hasError: true,
-          message: `ERROR: Requested operation failed.`,
-          error: {
-            error,
-          },
-        });
-      }
-  
-      // returning the response with success message
-      return res.status(SUCCESS).json({
-        hasError: false,
-        message: `SUCCESS: Requested operation successful.`,
-        data: {
-          totalSystemRoles: data.length,
-          systemRoles: data,
-        },
-      });
-    } catch (error) {
-      // this code runs in case of an error @ runtime
-  
-      // logging error messages to the console
-      logError(`ERROR @ getAllSystemRoles -> system-role.controllers.js`, error);
-  
-      // returning the response with an error message
-      return res.status(SERVER_ERROR).json({
-        hasError: true,
-        message: `ERROR: Requested operation failed.`,
-        error: {
-          error: `An unexpected error occurred on the server.`,
-        },
-      });
-    }
-  };
-  
-  // this controller takes in system role id via path params of url, searches
+
+    // this controller takes in system role id via path params of url, searches
   // database for the requested system role and returns it
-  const fetchSpecificSystemRole = async (req, res, next) => {
+  const fetchSpecificCV = async (req, res, next) => {
     try {
       // fetching required data via path params of url
-      const { systemRoleId } = req.params;
+      const { cvId } = req.params;
   
       // calling data service to fetching requested system role from database
-      const { status, data, error } = await findSystemRoleById(
-        systemRoleId,
+      const { status, data, error } = await findCvById(
+        cvId,
         `-__v`
       );
   
@@ -288,18 +173,117 @@ const {
     }
   };
   
+  // this controller returns all system roles stored in the database as
+  // an array
+  const getAllCVs = async (req, res, next) => {
+    try {
+      // calling data service to fetch all system roles from database
+      const { status, data, error } = await findAllCVs();
+  
+      // checking the result of the operation
+      if (status === SERVER_ERROR) {
+        // this code runs in case data service failed due to
+        // unknown database error
+  
+        // logging error message to the console
+        logError(`Requested operation failed. Unknown database error.`);
+  
+        // returning the response with an error message
+        return res.status(SERVER_ERROR).json({
+          hasError: true,
+          message: `ERROR: Requested operation failed.`,
+          error: {
+            error,
+          },
+        });
+      }
+  
+      // returning the response with success message
+      return res.status(SUCCESS).json({
+        hasError: false,
+        message: `SUCCESS: Requested operation successful.`,
+        data: {
+          totalSystemRoles: data.length,
+          systemRoles: data,
+        },
+      });
+    } catch (error) {
+      // this code runs in case of an error @ runtime
+  
+      // logging error messages to the console
+      logError(`ERROR @ getAllSystemRoles -> system-role.controllers.js`, error);
+  
+      // returning the response with an error message
+      return res.status(SERVER_ERROR).json({
+        hasError: true,
+        message: `ERROR: Requested operation failed.`,
+        error: {
+          error: `An unexpected error occurred on the server.`,
+        },
+      });
+    }
+  };
+
+    // this controller returns all system roles stored in the database as
+  // an array
+  const getFilteredCVs = async (req, res, next) => {
+    try {
+      // calling data service to fetch all system roles from database
+      const { status, data, error } = await findFilteredCVs(req.query);
+  
+      // checking the result of the operation
+      if (status === SERVER_ERROR) {
+        // this code runs in case data service failed due to
+        // unknown database error
+  
+        // logging error message to the console
+        logError(`Requested operation failed. Unknown database error.`);
+  
+        // returning the response with an error message
+        return res.status(SERVER_ERROR).json({
+          hasError: true,
+          message: `ERROR: Requested operation failed.`,
+          error: {
+            error,
+          },
+        });
+      }
+  
+      // returning the response with success message
+      return res.status(SUCCESS).json({
+        hasError: false,
+        message: `SUCCESS: Requested operation successful.`,
+        data
+      });
+    } catch (error) {
+      // this code runs in case of an error @ runtime
+  
+      // logging error messages to the console
+      logError(`ERROR @ getAllSystemRoles -> system-role.controllers.js`, error);
+  
+      // returning the response with an error message
+      return res.status(SERVER_ERROR).json({
+        hasError: true,
+        message: `ERROR: Requested operation failed.`,
+        error: {
+          error: `An unexpected error occurred on the server.`,
+        },
+      });
+    }
+  };
+  
   // this controller takes in system role id via path params of url, searches
   // database for the requested system role and updates it
-  const updateSystemRole = async (req, res, next) => {
+  const updateCV = async (req, res, next) => {
     try {
       // fetching required data via incoming path params of url
-      const { systemRoleId } = req.params;
+      const { cvId } = req.params;
   
       // calling data service to update requested system role in the database
-      const { status, data, error } = await findSystemRoleByIdAndUpdate(
-        systemRoleId,
+      const { status, data, error } = await findCvByIdAndUpdate(
+        cvId,
         req.body,
-        req.tokenData,
+        // req.tokenData,
         `-__v`
       );
   
@@ -363,10 +347,10 @@ const {
   
   // this controller takes in system role id via path params of url, searches
   // database for the requested system role and removes it (sets isDeleted to true)
-  const deleteSystemRole = async (req, res, next) => {
+  const deleteCV = async (req, res, next) => {
     try {
       // fetching required data via incoming path params of url
-      const { systemRoleId } = req.params;
+      const { cvId } = req.params;
   
       // creating update data obj to pass to the data service
       const updateObj = {
@@ -374,10 +358,10 @@ const {
       };
   
       // calling data service to update requested system role in the database
-      const { status, data, error } = await findSystemRoleByIdAndUpdate(
-        systemRoleId,
+      const { status, data, error } = await findCvByIdAndUpdate(
+        cvId,
         updateObj,
-        req.tokenData,
+        // req.tokenData,
         `-__v`
       );
   
@@ -442,10 +426,10 @@ const {
   // exporting controllers as modules
   module.exports = {
     createCV,
-    loginUser,
-    getAllSystemRoles,
-    fetchSpecificSystemRole,
-    updateSystemRole,
-    deleteSystemRole,
+    fetchSpecificCV,
+    getAllCVs,
+    getFilteredCVs,
+    updateCV,
+    deleteCV,
   };
   

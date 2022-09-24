@@ -44,7 +44,7 @@ userRouter.get(
   `/login`,
   // authenticateRequest,
   // authorizeRequest,
-  validateInput(loginSchema, `BODY`),
+  validateInput(loginSchema, `QUERY`),
   loginUser
 );
 

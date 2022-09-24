@@ -29,6 +29,8 @@ const signup = async (userData) => {
       ...userData,
     });
 
+    console.log('user', user);
+    
     // saving new system permission in the database
     const result = await user.save();
 
@@ -78,7 +80,15 @@ const login = async (userData) => {
 
     // creating an object to store new system permission
     const result = await User.findOne({email: email, password: password});
-    console.log('user', user);
+    console.log('user', result);
+
+    if(!result)
+    {
+      return {
+        status: NOT_FOUND,
+        message: 'USER NOT FOUND'
+      }
+    }
 
     // returning saved system permission to its caller
     return {

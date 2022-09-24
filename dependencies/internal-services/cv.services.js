@@ -1,6 +1,7 @@
 // importing required packages and modules
 const mongoose = require(`mongoose`);
 const { logWarning, logError } = require(`../helpers/console.helpers`);
+const fs = require('fs');
 
 // importing required config params
 const {
@@ -14,6 +15,7 @@ const {
     CONFLICT,
     SERVER_ERROR,
   },
+  SERVER_ADDRESS
 } = require(`../config`);
 
 // requiring required schemas
@@ -21,13 +23,16 @@ const CV = require(`../../api/models/cv.model`);
 
 // this data service takes in system permission data obj and _creator, saves system
 // role in the local database and returns response to its caller
-const saveCV = async (cvData) => {
+const saveCV = async (cvData, filePath) => {
   try { 
 
     // creating an object to store new system permission
     const cv = new CV({
         _id: new mongoose.Types.ObjectId(),
-        ...cvData,
+        workerType: cvData.workerType,
+        experience: cvData.experience,
+        cvUrl: filePath,
+        userId: cvData.userId
     });
         
     // saving new system permission in the database
@@ -69,101 +74,63 @@ const saveCV = async (cvData) => {
   }
 };
 
-// this data service takes in system permission data obj and _creator, saves system
-// role in the local database and returns response to its caller
-const login = async (userData) => {
+const saveCvPdf = async (userId, cvPdf, cvPdfName) => {
   try {
+    let filePath;
 
-    const {email, password} = userData;
-    console.log(email, password);
+    // preparing base64
+    let base64 = cvPdf;
 
-    // creating an object to store new system permission
-    const user = await User.findOne({email: email, password: password});
-    console.log('user', user);
+    //retrieve file extention from base64 string
+    let extension = String(base64).match(/[^:/]\w+(?=;|,)/)[0];
+    // console.log('media type', extension);
 
-    // saving new system permission in the database
-    const result = await user.save();
+    //extracting image from base64
+    let base64Image = base64.split('base64,')[1];
+    // console.log('image', base64Image);
 
-    // returning saved system permission to its caller
-    return {
-      status: CREATED,
-      data: result,
-    };
+    //creating fodler in projects directory
+    let pathToMakeFolder = `./public/cv/${userId}/`;
+    // console.log('path to make folder', pathToMakeFolder);
+
+    // creating folder if it has not been created yet
+    if (!fs.existsSync(pathToMakeFolder)) {
+      fs.mkdirSync(`./public/cv/${userId}/`, { recursive: true });
+    }
+
+    // creating file path
+    filePath = `./public/cv/${userId}/${cvPdfName}.${extension}`;
+
+    // writing file
+    fs.writeFile(filePath, base64Image, 'base64', async (err) => {
+      if (err) {
+        return res.status(httpsStatus.BAD_GATEWAY).json({
+          message: 'Error in saving pdf',
+          error: err,
+        });
+      }
+      // console.log('*** File Written to this Path ***', filePath);
+    });
+
+    filePath = filePath.split('./')[1];
+    filePath = `${SERVER_ADDRESS}${filePath}`;
+    return filePath;
   } catch (error) {
-    // this code runs in case of an error @ runtime
-
-    // logging error messages to the console
-    logError(
-      `ERROR @ saveSystemPermission -> system-permission.services.js`,
-      error
-    );
-
-    // checking if the error stems from duplicate value in database
-    const isDuplicateError = error && error.code === 11000;
-
-    // fetching fields which caused duplication error
-    const duplicateErrorFields = Object.keys(error.keyValue).join(`, `);
-
-    // setting value of status and description
-    const [status, err] = [
-      isDuplicateError ? CONFLICT : SERVER_ERROR,
-      isDuplicateError
-        ? `System permission creation failed due to duplicate ${duplicateErrorFields}.`
-        : `System permission creation failed.`,
-    ];
-
-    // returning response to indicate failure to its caller
-    return {
-      status,
-      error: err,
-    };
-  }
-};
-
-// this data service takes in query scope, fetches all system permissions stored in
-// the database
-const findSystemPermissions = async (queryScope) => {
-  try {
-    // querying database for all system permissions
-    const result = await SystemPermission.find({ isDeleted: false })
-      .populate({ path: `_creator`, select: `fullName systemPermissions` })
-      .select(queryScope)
-      .lean()
-      .exec();
-
-    // returning saved system permissions to its caller
-    return {
-      status: SUCCESS,
-      data: result,
-    };
-  } catch (error) {
-    // this code runs in case of an error @ runtime
-
-    // loggine error messages to the console
-    logError(
-      `ERROR @ findSystemPermissions -> system-permission.services.js`,
-      error
-    );
-
-    // returning response to indicate failure to its caller
-    return {
-      status: SERVER_ERROR,
-      error: `Unhandled exception occured on the server.`,
-    };
+    console.log(error);
   }
 };
 
 // this data service takes in system permission id and query scope, fetches
 // system permission stored in the database
-const findSystemPermissionById = async (systemPermission, queryScope) => {
+const findCvById = async (cvId) => {
   try {
     // querying database for the requested system permission
-    const result = await SystemPermission.findOne({ _id: systemPermission })
+    const result = await CV.findOne({ _id: cvId })
       .populate({
-        path: `_creator`,
-        select: `fullName allowedSystemPermissions photo`,
+        path: `userId`,
+        select: `-password`,
       })
-      .select(queryScope)
+      .select(`-__v`)
       .lean()
       .exec();
 
@@ -199,18 +166,115 @@ const findSystemPermissionById = async (systemPermission, queryScope) => {
   }
 };
 
+// this data service takes in query scope, fetches all system permissions stored in
+// the database
+const findAllCVs = async () => {
+  try {
+    // querying database for all system permissions
+    const result = await CV.find({ isDeleted: false })
+      .populate({ path: `userId`, select: `-password` })
+      .select('-__v')
+      .lean()
+      .exec();
+
+    // returning saved system permissions to its caller
+    return {
+      status: SUCCESS,
+      data: result,
+    };
+  } catch (error) {
+    // this code runs in case of an error @ runtime
+
+    // loggine error messages to the console
+    logError(
+      `ERROR @ findSystemPermissions -> system-permission.services.js`,
+      error
+    );
+
+    // returning response to indicate failure to its caller
+    return {
+      status: SERVER_ERROR,
+      error: `Unhandled exception occured on the server.`,
+    };
+  }
+};
+
+// this data service takes in query scope, fetches all system permissions stored in
+// the database
+const findFilteredCVs = async (requestQuery) => {
+  try {
+
+    let { filters } = requestQuery;
+
+    // page = Number(filters.page);
+    // recordsPerPage = Number(filters.recordsPerPage);
+    // sort = JSON.parse(filters.sort);
+    filters = JSON.parse(filters);
+
+    let conditionObj = {};
+
+    if(filters.workerType)
+    {
+      conditionObj[`workerType`] = filters.workerType;
+    }
+
+    if(filters.experience)
+    {
+      conditionObj[`experience`] = filters.experience;
+    }
+
+    // querying database for all system permissions
+    const result = await CV.find({ ...conditionObj, isDeleted: false })
+      .populate({ path: `userId`, select: `firstName lastName email phoneNumber address` })
+      .select('-__v')
+      .lean()
+      .exec();
+
+      // let pager = {
+      //   page: page,
+      //   recordsPerPage: recordsPerPage,
+      //   filteredRecords: result.length
+      // }
+
+      console.log(result);
+
+    // returning saved system permissions to its caller
+    return {
+      status: SUCCESS,
+      data: {
+        // pager: pager,
+        cv: result,
+      }
+    };
+  } catch (error) {
+    // this code runs in case of an error @ runtime
+
+    // loggine error messages to the console
+    logError(
+      `ERROR @ findSystemPermissions -> system-permission.services.js`,
+      error
+    );
+
+    // returning response to indicate failure to its caller
+    return {
+      status: SERVER_ERROR,
+      error: `Unhandled exception occured on the server.`,
+    };
+  }
+};
+
 // this data service takes in system permission id, update data object and query
 // scope, updates system permission stored in the database according to the
 // provided params and returns the updated system permission.
-const findSystemPermissionByIdAndUpdate = async (
-  systemPermissionId,
+const findCvByIdAndUpdate = async (
+  cvId,
   updateData,
-  updateBy,
+  // updateBy,
   queryScope
 ) => {
   try {
     // fetching required data from incoming updateBy
-    const { _bearer, allowedSystemPermissions } = updateBy;
+    // const { _bearer, allowedSystemPermissions } = updateBy;
 
     // creating an obj to store query config params
     const configParams = {
@@ -231,7 +295,7 @@ const findSystemPermissionByIdAndUpdate = async (
               field: attr,
               value: updateData[attr],
             },
-            _updater: _bearer,
+            // _updater: _bearer,
             updatedAt: Date.now(),
           },
         };
@@ -249,7 +313,7 @@ const findSystemPermissionByIdAndUpdate = async (
               field: attr,
               value: updateData[attr],
             },
-            _updater: _bearer,
+            // _updater: _bearer,
             updatedAt: Date.now(),
           },
         };
@@ -257,8 +321,8 @@ const findSystemPermissionByIdAndUpdate = async (
     }
 
     // querying database for the requested system permission
-    const result = await SystemPermission.findOneAndUpdate(
-      { _id: systemPermissionId, isDeleted: false },
+    const result = await CV.findOneAndUpdate(
+      { _id: cvId, isDeleted: false },
       updateData,
       configParams
     )
@@ -315,8 +379,9 @@ const findSystemPermissionByIdAndUpdate = async (
 // exporting controllers as modules
 module.exports = {
   saveCV,
-  login,
-  findSystemPermissions,
-  findSystemPermissionById,
-  findSystemPermissionByIdAndUpdate,
+  saveCvPdf,
+  findCvById,
+  findAllCVs,
+  findFilteredCVs,
+  findCvByIdAndUpdate,
 };

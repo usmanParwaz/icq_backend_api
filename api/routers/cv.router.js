@@ -11,20 +11,20 @@ const { validateInput } = require(`../middlewares/input-validation.middleware`);
 // importing required data validators
 const {
   createCVSchema,
-  loginSchema,
-  allSystemRolesSchema,
-  specificSystemRoleSchema,
-  updateSpecificSystemRoleSchema,
+  specificCvSchema,
+  allCvSchema,
+  filteredCVsSchema,
+  updateCVSchema,
 } = require(`../../dependencies/input-validation-schemas/cv.schemas`);
 
 // importing required controllers
 const {
   createCV,
-  loginUser,
-  getAllSystemRoles,
-  fetchSpecificSystemRole,
-  updateSystemRole,
-  deleteSystemRole,
+  fetchSpecificCV,
+  getAllCVs,
+  getFilteredCVs,
+  updateCV,
+  deleteCV,
 } = require(`../controllers/cv.controller`);
 
 // creating router
@@ -39,50 +39,49 @@ cvRouter.post(
   createCV
 );
 
-// 1-> route to add a new system role in the database
-cvRouter.post(
-  `/login`,
-  // authenticateRequest,
-  // authorizeRequest,
-  validateInput(loginSchema, `BODY`),
-  loginUser
-);
-
 // 1-> route to fetch a specific system role from database via _id
 // 2-> route to fetch all system roles as an array from database
 cvRouter.get(
-  `/:systemRoleId`,
-  authenticateRequest,
-  authorizeRequest,
-  validateInput(specificSystemRoleSchema, `PARAMS`),
-  fetchSpecificSystemRole
+  `/specific/:cvId`,
+  // authenticateRequest,
+  // authorizeRequest,
+  validateInput(specificCvSchema, `PARAMS`),
+  fetchSpecificCV
 );
 
 cvRouter.get(
   `/`,
   // authenticateRequest,
   // authorizeRequest,
-  validateInput(allSystemRolesSchema, `NONE`),
-  getAllSystemRoles
+  validateInput(allCvSchema, `NONE`),
+  getAllCVs
+);
+
+cvRouter.get(
+  `/getFilteredCVs`,
+  // authenticateRequest,
+  // authorizeRequest,
+  validateInput(filteredCVsSchema, `QUERY`),
+  getFilteredCVs
 );
 
 // 1-> route to update a specific system role in the database via _id
 cvRouter.patch(
-  `/:systemRoleId`,
-  authenticateRequest,
-  authorizeRequest,
-  validateInput(specificSystemRoleSchema, `PARAMS`),
-  validateInput(updateSpecificSystemRoleSchema, `BODY`),
-  updateSystemRole
+  `/:cvId`,
+  // authenticateRequest,
+  // authorizeRequest,
+  validateInput(specificCvSchema, `PARAMS`),
+  validateInput(updateCVSchema, `BODY`),
+  updateCV
 );
 
 // 1-> route to delete a specific systemRole from database via _id
 cvRouter.delete(
-  `/:systemRoleId`,
-  authenticateRequest,
-  authorizeRequest,
-  validateInput(specificSystemRoleSchema, `PARAMS`),
-  deleteSystemRole
+  `/:cvId`,
+  // authenticateRequest,
+  // authorizeRequest,
+  validateInput(specificCvSchema, `PARAMS`),
+  deleteCV
 );
 
 // exporting router as a module

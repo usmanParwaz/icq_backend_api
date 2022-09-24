@@ -23,6 +23,8 @@ module.exports = {
       ? `https://www.staging.example.com`
       : `https://www.example.com`,
 
+  SERVER_ADDRESS: `http://localhost:3000`,
+
   MONGO_ATLAS_CONNECTION_URI: `mongodb+srv://icq_db:%2FICQ2509@cluster0.fzu0lyr.mongodb.net/test`,
 
   ALLOWED_APP_MODES,

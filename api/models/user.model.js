@@ -10,32 +10,27 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       trim: true,
-      default: null,
       required: true,
     },
     lastName: {
       type: String,
       trim: true,
-      default: null,
       required: true,
     },
     email: {
       type: String,
       trim: true,
-      default: null,
       unique: true,
       required: true,
     },
     password: {
       type: String,
       trim: true,
-      default: null,
       required: true,
     },
     phoneNumber: {
       type: String,
       trim: true,
-      default: null,
       required: true,
     },
     address: {
@@ -47,7 +42,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       uppercase: true,
-      default: null,
       required: true,
     },
     isDeleted: {
@@ -57,6 +51,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+
   }
 );
 
