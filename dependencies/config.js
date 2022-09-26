@@ -14,16 +14,16 @@ const APP_MODE =
 module.exports = {
   APP_MODE,
 
-  NODE_PORT: 3000,
+  NODE_PORT: 4000,
 
   API_BASE_URL:
     APP_MODE === `DEV`
-      ? `http://localhost:3000`
+      ? `http://localhost:4000`
       : APP_MODE === `STAGE`
       ? `https://www.staging.example.com`
       : `https://www.example.com`,
 
-  SERVER_ADDRESS: `http://localhost:3000`,
+  SERVER_ADDRESS: `http://localhost:4000`,
 
   MONGO_ATLAS_CONNECTION_URI: `mongodb+srv://icq_db:%2FICQ2509@cluster0.fzu0lyr.mongodb.net/test`,
 

@@ -50,7 +50,7 @@ cvRouter.get(
 );
 
 cvRouter.get(
-  `/`,
+  `/all`,
   // authenticateRequest,
   // authorizeRequest,
   validateInput(allCvSchema, `NONE`),
