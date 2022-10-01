@@ -15,6 +15,7 @@ const {
   specificUserSchema,
   allUsersSchema,
   updateSpecificUserSchema,
+  checkUserEmail
 } = require(`../../dependencies/input-validation-schemas/user.schemas`);
 
 // importing required controllers
@@ -22,6 +23,7 @@ const {
   signupUser,
   loginUser,
   fetchSpecificUser,
+  checkUserForEmail,
   getAllUsers,
   updateUser,
   deleteSystemRole,
@@ -51,24 +53,34 @@ userRouter.get(
 // 1-> route to fetch a specific system role from database via _id
 // 2-> route to fetch all system roles as an array from database
 userRouter.get(
-  `/:userId`,
+  `/getUserById/:userId`,
   // authenticateRequest,
   // authorizeRequest,
   validateInput(specificUserSchema, `PARAMS`),
   fetchSpecificUser
 );
 
+// 1-> route to fetch a specific system role from database via _id
+// 2-> route to fetch all system roles as an array from database
 userRouter.get(
-  `/`,
+  `/getUserByEmail`,
   // authenticateRequest,
   // authorizeRequest,
-  validateInput(allUsersSchema, `NONE`),
+  validateInput(checkUserEmail, `QUERY`),
+  checkUserForEmail
+);
+
+userRouter.get(
+  `/list`,
+  // authenticateRequest,
+  // authorizeRequest,
+  validateInput(allUsersSchema, `QUERY`),
   getAllUsers
 );
 
 // 1-> route to update a specific system role in the database via _id
 userRouter.patch(
-  `/:userId`,
+  `/updateUser/:userId`,
   // authenticateRequest,
   // authorizeRequest,
   validateInput(specificUserSchema, `PARAMS`),

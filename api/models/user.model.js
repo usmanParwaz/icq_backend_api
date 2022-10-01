@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema(
       uppercase: true,
       required: true,
     },
+    _orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order'
+    },
     isDeleted: {
       type: Boolean,
       default: false,

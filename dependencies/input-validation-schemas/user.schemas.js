@@ -1,4 +1,5 @@
 // importing required packages and modules
+const { required } = require("joi");
 const Joi = require(`joi`);
 
 // importing required custom data validators
@@ -34,19 +35,39 @@ const specificUserSchema = Joi.object({
   
 });
 
+// defining validation schema for fetching a specific system role
+const checkUserEmail = Joi.object({
+  
+  email: Joi.string().required()
+  
+});
+
 // defining validation schema for fetching all system roles
-const allUsersSchema = null;
+const allUsersSchema = Joi.object({
+  
+  page: Joi.number().required(),
+  recordsPerPage: Joi.number().required(),
+  sort: Joi.string().required(),
+  filters: Joi.object({
+
+    fisrtName: Joi.string(),
+    lastName: Joi.string(),
+    email: Joi.string(),
+    phoneNumber: Joi.string(),
+    address: Joi.string(),
+    role: Joi.string().required()
+
+  }).required()
+  
+});
 
 // defining validation schema for updating a specific system role
 const updateSpecificUserSchema = Joi.object({
 
   firstName: Joi.string(),
   lastName: Joi.string(),
-  email: Joi.string(),
-  password: Joi.string(),
   phoneNumber: Joi.string(),
-  address: Joi.string(),
-  role: Joi.string(),
+  address: Joi.string()
 
 });
 
@@ -59,6 +80,7 @@ module.exports = {
   loginSchema,
   specificUserSchema,
   allUsersSchema,
-  updateSpecificUserSchema
+  updateSpecificUserSchema,
+  checkUserEmail
 
 };

@@ -170,18 +170,70 @@ const findUserById = async (userId) => {
 
 // this data service takes in query scope, fetches all system permissions stored in
 // the database
-const findAllUsers = async () => {
+const findAllUsers = async (requestQuery) => {
   try {
+
+    let { page, recordsPerPage, sort, filters } = requestQuery;
+    page = Number(page);
+    recordsPerPage = Number(recordsPerPage);
+    sort = JSON.parse(sort);
+    filters = JSON.parse(filters);
+    console.log(page, typeof(recordsPerPage), sort, filters);
+
+    let conditionObj = {};
+
+    if(filters.firstName)
+    {
+      conditionObj['firstName'] = filters.firstName;
+    }
+
+    if(filters.lastName)
+    {
+      conditionObj['lastName'] = filters.lastName;
+    }
+
+    if(filters.email)
+    {
+      conditionObj['email'] = filters.email;
+    }
+
+    if(filters.phoneNumber)
+    {
+      conditionObj['phoneNumber'] = filters.phoneNumber;
+    }
+
+    if(filters.address)
+    {
+      conditionObj['address'] = filters.address;
+    }
+
+    if(filters.role === 'WORKER' || filters.role === 'RECRUITER')
+    {
+      conditionObj['role'] = filters.role;
+    }
+
+    console.log(conditionObj);
+
     // querying database for all system permissions
-    const result = await User.find({ isDeleted: false })
+    const result = await User.find({ ...conditionObj, isDeleted: false })
       .select('-__v')
+      .skip(recordsPerPage * (page - 1))
+      .limit(recordsPerPage)
+      .sort(sort) 
       .lean()
       .exec();
+
+    let pager = {
+      page: page,
+      recordsPerPage: recordsPerPage,
+      filteredRecords: result.length,
+    };
 
     // returning saved system permissions to its caller
     return {
       status: SUCCESS,
-      data: result,
+      pager: pager,
+      data: result
     };
   } catch (error) {
     // this code runs in case of an error @ runtime
@@ -206,11 +258,13 @@ const findAllUsers = async () => {
 const findUserByIdAndUpdate = async (
   userId,
   updateData,
-  updateBy,
+  // updateBy,
 ) => {
   try {
     // fetching required data from incoming updateBy
-    const { _bearer, allowedSystemPermissions } = updateBy;
+    // const { _bearer, allowedSystemPermissions } = updateBy;
+
+    console.log(userId, updateData);
 
     // creating an obj to store query config params
     const configParams = {
@@ -249,7 +303,7 @@ const findUserByIdAndUpdate = async (
               field: attr,
               value: updateData[attr],
             },
-            _updater: _bearer,
+            // _updater: _bearer,
             updatedAt: Date.now(),
           },
         };
@@ -257,7 +311,7 @@ const findUserByIdAndUpdate = async (
     }
 
     // querying database for the requested system permission
-    const result = await SystemPermission.findOneAndUpdate(
+    const result = await User.findOneAndUpdate(
       { _id: userId, isDeleted: false },
       updateData,
       configParams
@@ -312,6 +366,48 @@ const findUserByIdAndUpdate = async (
   }
 };
 
+// this data service takes in system permission id and query scope, fetches
+// system permission stored in the database
+const findUserByEmail = async (email) => {
+  try {
+    // querying database for the requested system permission
+    const result = await User.findOne({ email: email })
+      .select('-__v')
+      .lean()
+      .exec();
+
+    // checking the result of the query
+    if (!result) {
+      // this code runs in case query didn't return anything from database
+
+      return {
+        getUserByEmailStatus: NOT_FOUND,
+        error: `Requested data not found in database.`,
+      };
+    }
+
+    // returning fetched data to its caller
+    return {
+      getUserByEmailStatus: SUCCESS,
+      userFound: result,
+    };
+  } catch (error) {
+    // this code runs in case of an error @ runtime
+
+    // loggine error messages to the console
+    logError(
+      `ERROR @ findSystemPermissionById -> system-permission.services.js`,
+      error
+    );
+
+    // returning 'SERVER_ERROR' to indicate failure to its caller
+    return {
+      status: SERVER_ERROR,
+      error: `Unhandled exception occured on the server.`,
+    };
+  }
+};
+
 // exporting controllers as modules
 module.exports = {
   signup,
@@ -319,4 +415,5 @@ module.exports = {
   findUserById,
   findAllUsers,
   findUserByIdAndUpdate, 
+  findUserByEmail
 };

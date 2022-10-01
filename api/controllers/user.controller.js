@@ -11,6 +11,7 @@ const {
   findUserById,
   findAllUsers,
   findUserByIdAndUpdate,
+  findUserByEmail
 } = require(`../../dependencies/internal-services/user.services`);
 
 // importing response status codes
@@ -31,6 +32,16 @@ const signupUser = async (req, res, next) => {
   try {
     // fetching required data via incoming token data
     // const { firstName, lastName, email, password, phoneNumber, address, role } = req.body;
+
+    const { getUserByEmailStatus, userFound } = await findUserByEmail(req.body.email);
+
+    if(getUserByEmailStatus == SUCCESS && userFound)
+    {
+      return res.status(CONFLICT).json({
+        hasError: false,
+        message: `Email Already Exists`
+      });
+    }
 
     // calling data service to save new system role in the database
     const { status, data, error } = await signup(req.body);
@@ -74,9 +85,7 @@ const signupUser = async (req, res, next) => {
     return res.status(CREATED).json({
       hasError: false,
       message: `SUCCESS: Requested operation successful.`,
-      data: {
-        systemRole: data,
-      },
+      data
     });
   } catch (error) {
     // this code runs in case of an error @ runtime
@@ -222,10 +231,73 @@ const fetchSpecificUser = async (req, res, next) => {
     return res.status(SUCCESS).json({
       hasError: false,
       message: `SUCCESS: Requested operation successful.`,
-      data: {
-        systemRole: data,
+      data
+    });
+  } catch (error) {
+    // this code runs in case of an error @ runtime
+
+    // logging error messages to the console
+    logError(
+      `ERROR @ fetchSpecificSystemRole -> system-role.controllers.js`,
+      error
+    );
+
+    // returning the response with an error message
+    return res.status(SERVER_ERROR).json({
+      hasError: true,
+      message: `ERROR: Requested operation failed.`,
+      error: {
+        error: `An unexpected error occurred on the server.`,
       },
     });
+  }
+};
+
+// this controller takes in system role id via path params of url, searches
+// database for the requested system role and returns it
+const checkUserForEmail = async (req, res, next) => {
+  try {
+    // fetching required data via path params of url
+    const { email } = req.query;
+
+    // calling data service to fetching requested system role from database
+    const { getUserByEmailStatus, userFound, error } = await findUserByEmail(email);
+
+    // checking the result of the operation
+    if (getUserByEmailStatus === SERVER_ERROR) {
+      // this code runs in case data service failed due to
+      // unknown database error
+
+      // logging error message to the console
+      logError(`Requested operation failed. Unknown database error.`);
+
+      // returning the response with an error message
+      return res.status(SERVER_ERROR).json({
+        hasError: true,
+        message: `ERROR: Requested operation failed.`,
+        error: {
+          error,
+        },
+      });
+    } else if (getUserByEmailStatus === SUCCESS) {
+      // this code runs in case data service could not find
+      // the requested resource
+
+      // returning the response with an error message
+      return res.status(CONFLICT).json({
+        hasError: false,
+        message: `Email Aalready Exists`
+      });
+    }
+
+    if(getUserByEmailStatus == NOT_FOUND)
+    {
+      // returning the response with success message
+      return res.status(SUCCESS).json({
+        hasError: false,
+        message: `SUCCESS: Available.`
+      });
+    }
   } catch (error) {
     // this code runs in case of an error @ runtime
 
@@ -251,7 +323,7 @@ const fetchSpecificUser = async (req, res, next) => {
 const getAllUsers = async (req, res, next) => {
   try {
     // calling data service to fetch all system roles from database
-    const { status, data, error } = await findAllUsers();
+    const { status, pager, data, error } = await findAllUsers(req.query);
 
     // checking the result of the operation
     if (status === SERVER_ERROR) {
@@ -275,10 +347,8 @@ const getAllUsers = async (req, res, next) => {
     return res.status(SUCCESS).json({
       hasError: false,
       message: `SUCCESS: Requested operation successful.`,
-      data: {
-        totalSystemRoles: data.length,
-        systemRoles: data,
-      },
+      pager: pager,
+      data
     });
   } catch (error) {
     // this code runs in case of an error @ runtime
@@ -308,7 +378,7 @@ const updateUser = async (req, res, next) => {
     const { status, data, error } = await findUserByIdAndUpdate(
       userId,
       req.body,
-      req.tokenData,
+      // req.tokenData,
     );
 
     // checking the result of the operation
@@ -348,9 +418,7 @@ const updateUser = async (req, res, next) => {
     return res.status(SUCCESS).json({
       hasError: false,
       message: `SUCCESS: Requested operation successful.`,
-      data: {
-        systemRole: data,
-      },
+      data
     });
   } catch (error) {
     // this code runs in case of an error @ runtime
@@ -451,6 +519,7 @@ module.exports = {
   signupUser,
   loginUser,
   fetchSpecificUser,
+  checkUserForEmail,
   getAllUsers,
   updateUser,
   deleteSystemRole,
