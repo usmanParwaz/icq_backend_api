@@ -29,12 +29,16 @@ const saveCV = async (cvData, filePath) => {
     // creating an object to store new system permission
     const cv = new CV({
         _id: new mongoose.Types.ObjectId(),
+        firstName: cvData.firstName,
+        lastName: cvData.lastName,
         workerType: cvData.workerType,
-        experience: cvData.experience,
         cvUrl: filePath,
+        price: cvData.price,
         userId: cvData.userId
     });
-        
+
+    console.log(cv);
+
     // saving new system permission in the database
     const result = await cv.save();
 
@@ -113,7 +117,7 @@ const saveCvPdf = async (userId, cvPdf, cvPdfName) => {
     });
 
     filePath = filePath.split('./')[1];
-    filePath = `${SERVER_ADDRESS}${filePath}`;
+    filePath = `${SERVER_ADDRESS}/${filePath}`;
     return filePath;
   } catch (error) {
     console.log(error);
@@ -204,29 +208,37 @@ const findAllCVs = async () => {
 const findFilteredCVs = async (requestQuery) => {
   try {
 
-    let { filters } = requestQuery;
+    let { page, recordsPerPage, sort, filters } = requestQuery;
 
-    // page = Number(filters.page);
-    // recordsPerPage = Number(filters.recordsPerPage);
-    // sort = JSON.parse(filters.sort);
+    page = Number(page);
+    recordsPerPage = Number(recordsPerPage);
+    sort = JSON.parse(sort);
     filters = JSON.parse(filters);
 
     let conditionObj = {};
+
+    if(filters.firstName)
+    {
+      conditionObj[`firstName`] = filters.firstName;
+    }
+
+    if(filters.lastName)
+    {
+      conditionObj[`lastName`] = filters.lastName;
+    }
 
     if(filters.workerType)
     {
       conditionObj[`workerType`] = filters.workerType;
     }
 
-    if(filters.experience)
-    {
-      conditionObj[`experience`] = filters.experience;
-    }
-
     // querying database for all system permissions
     const result = await CV.find({ ...conditionObj, isDeleted: false })
       .populate({ path: `userId`, select: `firstName lastName email phoneNumber address` })
       .select('-__v')
+      .skip(recordsPerPage * (page - 1))
+      .limit(recordsPerPage)
+      .sort(sort) 
       .lean()
       .exec();
 
@@ -241,10 +253,7 @@ const findFilteredCVs = async (requestQuery) => {
     // returning saved system permissions to its caller
     return {
       status: SUCCESS,
-      data: {
-        // pager: pager,
-        cv: result,
-      }
+      data: result
     };
   } catch (error) {
     // this code runs in case of an error @ runtime

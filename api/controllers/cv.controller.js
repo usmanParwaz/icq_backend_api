@@ -30,12 +30,13 @@ const {
   // role in the database.
   const createCV = async (req, res, next) => {
     try {
+
       // fetching required data via incoming token data
       const { userId, cvPdf, cvPdfName } = req.body;
 
       // making pdf url 
       const filePath = await saveCvPdf(userId, cvPdf, cvPdfName);
-  
+
       // calling data service to save new system role in the database
       const { status, data, error } = await saveCV(req.body, filePath);
   
@@ -78,9 +79,7 @@ const {
       return res.status(CREATED).json({
         hasError: false,
         message: `SUCCESS: Requested operation successful.`,
-        data: {
-          cv: data,
-        },
+        data
       });
     } catch (error) {
       // this code runs in case of an error @ runtime
@@ -149,9 +148,7 @@ const {
       return res.status(SUCCESS).json({
         hasError: false,
         message: `SUCCESS: Requested operation successful.`,
-        data: {
-          systemRole: data,
-        },
+        data
       });
     } catch (error) {
       // this code runs in case of an error @ runtime
@@ -202,10 +199,8 @@ const {
       return res.status(SUCCESS).json({
         hasError: false,
         message: `SUCCESS: Requested operation successful.`,
-        data: {
-          totalSystemRoles: data.length,
-          systemRoles: data,
-        },
+        totalCVs: data.length,
+        data
       });
     } catch (error) {
       // this code runs in case of an error @ runtime

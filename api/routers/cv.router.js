@@ -32,7 +32,7 @@ const cvRouter = express.Router();
 
 // 1-> route to add a new system role in the database
 cvRouter.post(
-  `/`,
+  `/create`,
   // authenticateRequest,
   // authorizeRequest,
   validateInput(createCVSchema, `BODY`),

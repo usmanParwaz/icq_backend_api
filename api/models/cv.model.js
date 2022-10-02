@@ -97,36 +97,31 @@ const cvSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
+  firstName: {
+    type: String,
+    required: true
+  },
+  lastName: {
+    type: String,
+    required: true
+  },
   workerType: {
     type: String,
     required: true,
-    enum: ['GARDNER', 'CLEANER', 'SWEAPER', 'GUARD'],
-  },
-  experience: {
-    type: String,
-    trim: true,
-    required: true,
+    enum: ['GARDNER', 'CLEANER', 'SWEAPER', 'GUARD', 'DRIVER'],
   },
   cvUrl: {
     type: String,
     required: true,
   },
+  price: {
+    type: String,
+    required: true
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  // personalInformation: {
-  //   type: [personalInfo],
-  //   required: true,
-  // },
-  // educationInformation: {
-  //   type: [educationInfo],
-  //   required: true,
-  // },
-  // experience: {
-  //   type: [experience],
-  //   required: true,
-  // },
   isDeleted: {
     type: Boolean,
     default: false,

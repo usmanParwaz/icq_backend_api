@@ -9,10 +9,12 @@ const { objectIdValidation } = require(`../helpers/joi.helpers`);
 // defining validation schema for adding a new system role
 const createCVSchema = Joi.object({
 
+  firstName: Joi.string().required(),
+  lastName: Joi.string().required(),
   workerType: Joi.string().required(),
-  experience: Joi.string().required(),
   cvPdf: Joi.string().required(),
   cvPdfName: Joi.string().required(),
+  price: Joi.string().required(),
   userId: Joi.string().required(),
 
 });
@@ -40,10 +42,9 @@ const filteredCVsSchema = Joi.object({
 // defining validation schema for updating a specific system role
 const updateCVSchema = Joi.object({
 
-  workerType: Joi.string().required(),
-  experience: Joi.string().required(),
-  cvPdf: Joi.string().required(),
-  cvPdfName: Joi.string().required(),
+  firstName: Joi.string(),
+  lastName: Joi.string(),
+  price: Joi.string(),
 
 });
 
