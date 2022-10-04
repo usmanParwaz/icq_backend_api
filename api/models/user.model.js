@@ -44,9 +44,15 @@ const userSchema = new mongoose.Schema(
       uppercase: true,
       required: true,
     },
+    selectedCVs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Cv",
+      },
+    ],
     _orderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Order'
+      ref: "Order",
     },
     isDeleted: {
       type: Boolean,
@@ -55,9 +61,8 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-
   }
 );
 
 // exporting schema model as a module
-module.exports = mongoose.model('User', userSchema, `User`);
+module.exports = mongoose.model("User", userSchema, `User`);

@@ -15,7 +15,8 @@ const {
   specificUserSchema,
   allUsersSchema,
   updateSpecificUserSchema,
-  checkUserEmail
+  checkUserEmail,
+  addOrRemoveCVsSchema,
 } = require(`../../dependencies/input-validation-schemas/user.schemas`);
 
 // importing required controllers
@@ -26,6 +27,8 @@ const {
   checkUserForEmail,
   getAllUsers,
   updateUser,
+  addSelectedCVs,
+  removeSelectedCVs,
   deleteSystemRole,
 } = require(`../controllers/user.controller`);
 
@@ -86,6 +89,26 @@ userRouter.patch(
   validateInput(specificUserSchema, `PARAMS`),
   validateInput(updateSpecificUserSchema, `BODY`),
   updateUser
+);
+
+// 1-> route to update a specific system role in the database via _id
+userRouter.patch(
+  `/addSelectedCVs/:userId`,
+  // authenticateRequest,
+  // authorizeRequest,
+  validateInput(specificUserSchema, `PARAMS`),
+  validateInput(addOrRemoveCVsSchema, `BODY`),
+  addSelectedCVs
+);
+
+// 1-> route to update a specific system role in the database via _id
+userRouter.patch(
+  `/removeSelectedCVs/:userId`,
+  // authenticateRequest,
+  // authorizeRequest,
+  validateInput(specificUserSchema, `PARAMS`),
+  validateInput(addOrRemoveCVsSchema, `BODY`),
+  removeSelectedCVs
 );
 
 // 1-> route to delete a specific systemRole from database via _id

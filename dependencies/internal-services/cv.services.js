@@ -1,7 +1,7 @@
 // importing required packages and modules
 const mongoose = require(`mongoose`);
 const { logWarning, logError } = require(`../helpers/console.helpers`);
-const fs = require('fs');
+const fs = require("fs");
 
 // importing required config params
 const {
@@ -15,7 +15,7 @@ const {
     CONFLICT,
     SERVER_ERROR,
   },
-  SERVER_ADDRESS
+  SERVER_ADDRESS,
 } = require(`../config`);
 
 // requiring required schemas
@@ -24,17 +24,16 @@ const CV = require(`../../api/models/cv.model`);
 // this data service takes in system permission data obj and _creator, saves system
 // role in the local database and returns response to its caller
 const saveCV = async (cvData, filePath) => {
-  try { 
-
+  try {
     // creating an object to store new system permission
     const cv = new CV({
-        _id: new mongoose.Types.ObjectId(),
-        firstName: cvData.firstName,
-        lastName: cvData.lastName,
-        workerType: cvData.workerType,
-        cvUrl: filePath,
-        price: cvData.price,
-        userId: cvData.userId
+      _id: new mongoose.Types.ObjectId(),
+      firstName: cvData.firstName,
+      lastName: cvData.lastName,
+      workerType: cvData.workerType,
+      cvUrl: filePath,
+      price: cvData.price,
+      userId: cvData.userId,
     });
 
     console.log(cv);
@@ -90,7 +89,7 @@ const saveCvPdf = async (userId, cvPdf, cvPdfName) => {
     // console.log('media type', extension);
 
     //extracting image from base64
-    let base64Image = base64.split('base64,')[1];
+    let base64Image = base64.split("base64,")[1];
     // console.log('image', base64Image);
 
     //creating fodler in projects directory
@@ -106,17 +105,17 @@ const saveCvPdf = async (userId, cvPdf, cvPdfName) => {
     filePath = `./public/cv/${userId}/${cvPdfName}.${extension}`;
 
     // writing file
-    fs.writeFile(filePath, base64Image, 'base64', async (err) => {
+    fs.writeFile(filePath, base64Image, "base64", async (err) => {
       if (err) {
         return res.status(httpsStatus.BAD_GATEWAY).json({
-          message: 'Error in saving pdf',
+          message: "Error in saving pdf",
           error: err,
         });
       }
       // console.log('*** File Written to this Path ***', filePath);
     });
 
-    filePath = filePath.split('./')[1];
+    filePath = filePath.split("./")[1];
     filePath = `${SERVER_ADDRESS}/${filePath}`;
     return filePath;
   } catch (error) {
@@ -177,7 +176,7 @@ const findAllCVs = async () => {
     // querying database for all system permissions
     const result = await CV.find({ isDeleted: false })
       .populate({ path: `userId`, select: `-password` })
-      .select('-__v')
+      .select("-__v")
       .lean()
       .exec();
 
@@ -207,7 +206,6 @@ const findAllCVs = async () => {
 // the database
 const findFilteredCVs = async (requestQuery) => {
   try {
-
     let { page, recordsPerPage, sort, filters } = requestQuery;
 
     page = Number(page);
@@ -217,43 +215,47 @@ const findFilteredCVs = async (requestQuery) => {
 
     let conditionObj = {};
 
-    if(filters.firstName)
-    {
+    if (filters.firstName) {
       conditionObj[`firstName`] = filters.firstName;
     }
 
-    if(filters.lastName)
-    {
+    if (filters.lastName) {
       conditionObj[`lastName`] = filters.lastName;
     }
 
-    if(filters.workerType)
-    {
+    if (filters.workerType) {
       conditionObj[`workerType`] = filters.workerType;
     }
 
+    const totalCVs = await CV.countDocuments({ ...conditionObj, isDeleted: false });
+
     // querying database for all system permissions
     const result = await CV.find({ ...conditionObj, isDeleted: false })
-      .populate({ path: `userId`, select: `firstName lastName email phoneNumber address` })
-      .select('-__v')
+      .populate({
+        path: `userId`,
+        select: `firstName lastName email phoneNumber address`,
+      })
+      .select("-__v")
       .skip(recordsPerPage * (page - 1))
       .limit(recordsPerPage)
-      .sort(sort) 
+      .sort(sort)
       .lean()
       .exec();
 
-      // let pager = {
-      //   page: page,
-      //   recordsPerPage: recordsPerPage,
-      //   filteredRecords: result.length
-      // }
+    let pager = {
+      page: page,
+      recordsPerPage: recordsPerPage,
+      filteredRecords: result.length,
+      totalRecords: totalCVs
+    };
 
-      console.log(result);
+    console.log(result);
 
     // returning saved system permissions to its caller
     return {
       status: SUCCESS,
-      data: result
+      pager: pager,
+      data: result,
     };
   } catch (error) {
     // this code runs in case of an error @ runtime
