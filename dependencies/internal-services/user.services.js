@@ -23,6 +23,7 @@ const User = require(`../../api/models/user.model`);
 // role in the local database and returns response to its caller
 const signup = async (userData) => {
   try {
+    const userData = 0;
     // creating an object to store new system permission
     const user = new User({
       _id: new mongoose.Types.ObjectId(),
@@ -205,7 +206,10 @@ const findAllUsers = async (requestQuery) => {
 
     console.log(conditionObj);
 
-    const totalUsers = await User.countDocuments({...conditionObj, isDeleted: false});
+    const totalUsers = await User.countDocuments({
+      ...conditionObj,
+      isDeleted: false,
+    });
 
     // querying database for all system permissions
     const result = await User.find({ ...conditionObj, isDeleted: false })
@@ -220,7 +224,7 @@ const findAllUsers = async (requestQuery) => {
       page: page,
       recordsPerPage: recordsPerPage,
       filteredRecords: result.length,
-      totalRecords: totalUsers
+      totalRecords: totalUsers,
     };
 
     // returning saved system permissions to its caller
