@@ -84,8 +84,10 @@ const saveCvPdf = async (userId, cvPdf, cvPdfName) => {
     // preparing base64
     let base64 = cvPdf;
 
+    const testString = `/[^:/]\w+(?=;|,)/`;
+
     //retrieve file extention from base64 string
-    let extension = String(base64).match(/[^:/]\w+(?=;|,)/)[0];
+    let extension = String(base64).match(testString)[0];
     // console.log('media type', extension);
 
     //extracting image from base64
@@ -227,7 +229,10 @@ const findFilteredCVs = async (requestQuery) => {
       conditionObj[`workerType`] = filters.workerType;
     }
 
-    const totalCVs = await CV.countDocuments({ ...conditionObj, isDeleted: false });
+    const totalCVs = await CV.countDocuments({
+      ...conditionObj,
+      isDeleted: false,
+    });
 
     // querying database for all system permissions
     const result = await CV.find({ ...conditionObj, isDeleted: false })
@@ -246,7 +251,7 @@ const findFilteredCVs = async (requestQuery) => {
       page: page,
       recordsPerPage: recordsPerPage,
       filteredRecords: result.length,
-      totalRecords: totalCVs
+      totalRecords: totalCVs,
     };
 
     console.log(result);
