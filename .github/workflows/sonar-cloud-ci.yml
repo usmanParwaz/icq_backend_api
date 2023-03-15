@@ -1,16 +1,12 @@
-name: SonarCloud
+name: Build
 on:
   push:
     branches:
       - main
       - staging
       - dev
-      - hot-fix*
-      - release*
       - feat*
       - fixes*
-      - bugs*
-
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -18,7 +14,7 @@ jobs:
     name: SonarCloud
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: SonarCloud Scan
