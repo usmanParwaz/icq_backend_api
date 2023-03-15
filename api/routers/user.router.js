@@ -38,8 +38,8 @@ const userRouter = express.Router();
 // 1-> route to add a new system role in the database
 userRouter.post(
   `/signup`,
-  // authenticateRequest,
-  // authorizeRequest,
+  authenticateRequest,
+  authorizeRequest,
   validateInput(signupSchema, `BODY`),
   signupUser
 );
